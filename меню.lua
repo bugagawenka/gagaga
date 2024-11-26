@@ -14,7 +14,7 @@ local Theme = {
     DropdownColor = Color3.fromRGB(70, 70, 70)
 }
 
--- Создать основное окно
+-- Функция для создания UI библиотеки
 function Library.CreateLib(title, themeName)
     local ui = {}
 
@@ -60,12 +60,13 @@ function Library.CreateLib(title, themeName)
     -- Таблицы для хранения вкладок
     ui.Tabs = {}
 
-    -- Создать вкладку
+    -- Функция для создания вкладки
     function ui:NewTab(tabName)
         local tab = {}
         tab.Name = tabName
         tab.Sections = {}
 
+        -- Создание вкладки
         local tabButton = Instance.new("TextButton")
         tabButton.Name = tabName .. "TabButton"
         tabButton.Size = UDim2.new(0, 100, 0, 30)
@@ -74,9 +75,10 @@ function Library.CreateLib(title, themeName)
         tabButton.TextColor3 = Theme.TextColor
         tabButton.Font = Enum.Font.Gotham
         tabButton.TextSize = 14
+        tabButton.Position = UDim2.new(0, 10, 0, 50) -- Позиция вкладки
         tabButton.Parent = mainFrame
 
-        -- Создать секцию
+        -- Создание секции
         function tab:NewSection(sectionName)
             local section = {}
             section.Name = sectionName
@@ -85,7 +87,7 @@ function Library.CreateLib(title, themeName)
             local sectionFrame = Instance.new("Frame")
             sectionFrame.Name = sectionName .. "Section"
             sectionFrame.Size = UDim2.new(1, -20, 0, 100)
-            sectionFrame.Position = UDim2.new(0, 10, 0, 60)
+            sectionFrame.Position = UDim2.new(0, 10, 0, 60) -- Позиция секции
             sectionFrame.BackgroundColor3 = Theme.SectionColor
             sectionFrame.Parent = mainFrame
 
@@ -104,7 +106,7 @@ function Library.CreateLib(title, themeName)
             sectionLabel.TextSize = 16
             sectionLabel.Parent = sectionFrame
 
-            -- Добавить кнопку
+            -- Функция для добавления кнопки в секцию
             function section:NewButton(buttonText, buttonInfo, callback)
                 local button = Instance.new("TextButton")
                 button.Name = buttonText .. "Button"
@@ -123,6 +125,77 @@ function Library.CreateLib(title, themeName)
 
                 button.MouseButton1Click:Connect(function()
                     pcall(callback)
+                end)
+            end
+
+            -- Добавить переключатель
+            function section:NewToggle(toggleText, toggleInfo, callback)
+                local toggle = Instance.new("TextButton")
+                toggle.Name = toggleText .. "Toggle"
+                toggle.Size = UDim2.new(0, 150, 0, 30)
+                toggle.Position = UDim2.new(0, 10, 0, 80)
+                toggle.BackgroundColor3 = Theme.ToggleOffColor
+                toggle.Text = toggleText
+                toggle.TextColor3 = Theme.TextColor
+                toggle.Font = Enum.Font.Gotham
+                toggle.TextSize = 14
+                toggle.Parent = sectionFrame
+
+                local toggleCorner = Instance.new("UICorner")
+                toggleCorner.CornerRadius = UDim.new(0, 10)
+                toggleCorner.Parent = toggle
+
+                toggle.MouseButton1Click:Connect(function()
+                    if toggle.BackgroundColor3 == Theme.ToggleOffColor then
+                        toggle.BackgroundColor3 = Theme.ToggleOnColor
+                    else
+                        toggle.BackgroundColor3 = Theme.ToggleOffColor
+                    end
+                    pcall(callback, toggle.BackgroundColor3 == Theme.ToggleOnColor)
+                end)
+            end
+
+            -- Добавить слайдер
+            function section:NewSlider(sliderText, sliderInfo, maxVal, minVal, callback)
+                local slider = Instance.new("Frame")
+                slider.Name = sliderText .. "Slider"
+                slider.Size = UDim2.new(0, 250, 0, 30)
+                slider.Position = UDim2.new(0, 10, 0, 120)
+                slider.BackgroundColor3 = Theme.SliderColor
+                slider.Parent = sectionFrame
+
+                local sliderCorner = Instance.new("UICorner")
+                sliderCorner.CornerRadius = UDim.new(0, 10)
+                sliderCorner.Parent = slider
+
+                local sliderButton = Instance.new("TextButton")
+                sliderButton.Size = UDim2.new(0, 10, 1, 0)
+                sliderButton.Position = UDim2.new(0, 0, 0, 0)
+                sliderButton.BackgroundColor3 = Theme.TextColor
+                sliderButton.Text = ""
+                sliderButton.Parent = slider
+
+                local dragging = false
+                local value = 0
+                sliderButton.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        dragging = true
+                    end
+                end)
+
+                sliderButton.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        dragging = false
+                    end
+                end)
+
+                slider.InputChanged:Connect(function(input)
+                    if dragging then
+                        local newX = math.clamp(input.Position.X - slider.AbsolutePosition.X, 0, slider.AbsoluteSize.X)
+                        sliderButton.Position = UDim2.new(0, newX, 0, 0)
+                        value = math.floor((newX / slider.AbsoluteSize.X) * (maxVal - minVal) + minVal)
+                        callback(value)
+                    end
                 end)
             end
 
